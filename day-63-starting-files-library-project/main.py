@@ -14,13 +14,13 @@ app = Flask(__name__)
 
 class Book(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    book: Mapped[str] = mapped_column(unique=True)
-    author: Mapped[str] = mapped_column()
-    rating: Mapped[float] = mapped_column()
+    title: Mapped[str] = mapped_column(unique=True)
+    author: Mapped[str] = mapped_column(nullable=False)
+    rating: Mapped[float] = mapped_column(nullable=False)
 
 app = Flask(__name__)
 
-all_books = []
+# all_books = []
 
 
 @app.route('/')
@@ -33,7 +33,7 @@ def home():
 def add():
     if request.method == 'POST':
         book = Book(
-            book=request.form.get('name'),
+            title=request.form.get('name'),
             author=request.form.get('author'),
             rating=request.form.get('rating'),
         )
@@ -52,13 +52,33 @@ if __name__ == "__main__":
     db.init_app(app)
     with app.app_context():
         db.create_all()
-    # book = db.Table(
-    #     "book",
-    #     sa.Column("id", sa.ForeignKey(Book.id), primary_key=True),
-    #     sa.Column("book", sa.ForeignKey(Book.id), unique=True),
-    #     sa.Column("author", sa.ForeignKey(Book.id), nullable=False),
-    #     sa.Column("rating", sa.ForeignKey(Book.id), nullable=False),
-    # )
+
+        # ##Creating a record##
+        # new_book = Book(id=2,title="Harry Potter", author="J. K. Rowling", rating=9.3)
+        # db.session.add(new_book)
+        # db.session.commit()
+        # ## Reading Records##
+        # result = db.session.execute(db.select(Book).order_by(Book.title))
+        # all_books = result.scalars().all()
+        # print(all_books)
+        # ##Updating Records##
+        # book_to_update = db.session.execute(db.select(Book).where(Book.title == "Harry Potter")).scalar()
+        # book_to_update.title = "Harry Potter and the Chamber of Secrets"
+        # db.session.commit()
+        # ##Updating record by Primary Key##
+        # book_id = 2
+        # book_to_update = db.session.execute(db.select(Book).where(Book.id == book_id)).scalar()
+        # # or book_to_update = db.get_or_404(Book, book_id)
+        # book_to_update.title = "Harry Potter and the Goblet of Fire"
+        # db.session.commit()
+        # ## Deleting a record by Primary Key
+        # book_id = 2
+        #
+        # book_to_delete = db.session.execute(db.select(Book).where(Book.id == book_id)).scalar()
+        # # or book_to_delete = db.get_or_404(Book, book_id)
+        # db.session.delete(book_to_delete)
+        # db.session.commit()
+
     app.run(debug=True)
 
 
