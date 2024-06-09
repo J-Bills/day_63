@@ -13,7 +13,7 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 
 class Book(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
     title: Mapped[str] = mapped_column(unique=True)
     author: Mapped[str] = mapped_column(nullable=False)
     rating: Mapped[float] = mapped_column(nullable=False)
@@ -25,9 +25,36 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    message = 'Library Empty'
-    return render_template('index.html', books=all_books, msg=message)
+    result = db.session.execute(db.select(Book).order_by(Book.title))
+    all_books = result.scalars().all()
+    return render_template('index.html', books=all_books)
+@app.route('/book', methods=['GET', 'POST'])
+def edit():
+    if request.method == 'POST':
+        with app.app_context():
+            # Update Record
+            book_id = request.form["id"]
+            # print(book_id)
+            book_to_update = db.get_or_404(Book, book_id)
+            book_to_update.rating = request.form["rating"]
+            db.session.commit()
+        return redirect(url_for('home'))
+    book_id = request.args.get('id')
+    book_selected = db.get_or_404(Book, book_id)
+    return render_template("edit.html", book=book_selected)
 
+@app.route('/remove', methods=['GET', 'POST'])
+def delete():
+    if request.method == 'POST':
+        with app.app_context():
+            book_id = request.form.get('id')
+            book_to_delete = db.get_or_404(Book, book_id)
+            db.session.delete(book_to_delete)
+            db.session.commit()
+        return redirect(url_for('home'))
+    book_id = request.args.get('id')
+    book_to_delete = db.get_or_404(Book, book_id)
+    return render_template("delete.html", book=book_to_delete)
 
 @app.route("/add", methods=['GET', 'POST'])
 def add():
